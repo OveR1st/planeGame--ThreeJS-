@@ -127,8 +127,24 @@ scene.add(shadowLightHelper)
 
 class Sea {
   constructor() {
-    const geom = new THREE.CylinderBufferGeometry(600, 600, 800, 40, 10);
+    const geom = new THREE.CylinderGeometry(600, 600, 800, 40, 10);
     geom.applyMatrix4(new THREE.Matrix4().makeRotationX(-Math.PI / 2));
+
+    const l = geom.vertices.length;
+
+    this.waves = [];
+
+    for (let i = 0; i < l; i++) {
+      const v = geom.vertices[i];
+      this.waves.push({
+        x: v.x,
+        y: v.y,
+        z: v.z,
+        ang: Math.random() * Math.PI * 2,
+        amp: 5 + Math.random() * 15,
+        speed: .016 + Math.random() * .032,
+      });
+    }
     const material = new THREE.MeshPhongMaterial({
       color: colors.blue,
       transparent: true,
@@ -139,6 +155,23 @@ class Sea {
     this.mesh.receiveShadow = true;
   }
 
+}
+
+Sea.prototype.moveWaves = function (){
+  const verts = this.mesh.geometry.vertices;
+  const l = verts.length;
+
+  for(let i = 0; i < l; i++) {
+    const v = verts[i];
+    const vprops = this.waves[i];
+
+    v.x = vprops.x + Math.cos(vprops.ang) * vprops.amp;
+    v.y = vprops.y + Math.sin(vprops.ang) * vprops.amp;
+
+    vprops.ang += vprops.speed;
+  }
+  this.mesh.geometry.verticesNeedUpdate = true;
+  this.mesh.rotation.z += .005;
 }
 
 const sea = new Sea();
@@ -314,9 +347,9 @@ class Pilot {
     /**
      * Ears
      */
-    const earGeom = new THREE.BoxGeometry(2,3,2);
+    const earGeom = new THREE.BoxGeometry(2, 3, 2);
     const earL = new THREE.Mesh(earGeom, faceMat);
-    earL.position.set(0,0,-6);
+    earL.position.set(0, 0, -6);
 
     const earR = earL.clone();
     earR.position.z = -earL.position.z;
@@ -354,7 +387,7 @@ class AirPlane {
       color: colors.red,
       flatShading: true,
     });
-    console.log(geomCockpit.vertices)
+
 
     geomCockpit.vertices[4].y -= 10;
     geomCockpit.vertices[4].z += 20;
@@ -511,7 +544,7 @@ class AirPlane {
 
 
     const suspensionGeom = new THREE.BoxGeometry(4, 10, 4)
-    suspensionGeom.applyMatrix(new THREE.Matrix4().makeTranslation(0, 10, 0))
+    suspensionGeom.applyMatrix4(new THREE.Matrix4().makeTranslation(0, 10, 0))
     const suspensionMat = new THREE.MeshPhongMaterial({
       color: colors.red,
       flatShading: true
@@ -533,7 +566,9 @@ class AirPlane {
 
 }
 
-
+//TODO 1. Придумать сетку
+//TODO 2. Повторить svg фильтры
+//TODO 3. Повторить все уроки и курсы
 const airplane = new AirPlane();
 airplane.mesh.scale.set(.25, .25, .25);
 airplane.mesh.position.y = 100;
@@ -553,8 +588,8 @@ const tick = () => {
   airplane.pilot.updateHairs();
 
   // mesh sea
-  sea.mesh.rotation.z += .005;
-
+  // sea.mesh.rotation.z += .005;
+    sea.moveWaves();
   // renderer
 
   renderer.render(scene, camera);
