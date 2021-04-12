@@ -79,7 +79,7 @@ const camera = new THREE.PerspectiveCamera(
     nearPlane,
     farPlane
 );
-camera.position.set(0, 100, 70);
+camera.position.set(0, 100, 200);
 
 // Controls
 // const controls = new OrbitControls(camera, canvas)
@@ -218,6 +218,7 @@ scene.add(sky.mesh);
  */
 class Pilot {
   constructor() {
+    this.angleHairs = 0;
     this.mesh = new THREE.Object3D();
     /**
      * Body
@@ -275,9 +276,9 @@ class Pilot {
     /**
      * Hairs - Side
      */
-    const hairSideGeom = new THREE.BoxGeometry(12,4,2);
-    hairSideGeom.applyMatrix4(new THREE.Matrix4().makeTranslation(-6,0,0));
-    const hairSideR = new THREE.Mesh(hairSideGeom,hairMat);
+    const hairSideGeom = new THREE.BoxGeometry(12, 4, 2);
+    hairSideGeom.applyMatrix4(new THREE.Matrix4().makeTranslation(-6, 0, 0));
+    const hairSideR = new THREE.Mesh(hairSideGeom, hairMat);
     const hairSideL = hairSideR.clone();
     hairSideR.position.set(8, -2, 6);
     hairSideL.position.set(8, -2, -6);
@@ -287,11 +288,52 @@ class Pilot {
     /**
      * Hairs - Back
      */
-    const hairBackGeom = new THREE.BoxGeometry(2,8,10);
+    const hairBackGeom = new THREE.BoxGeometry(2, 8, 10);
     const hairBack = new THREE.Mesh(hairBackGeom, hairMat);
-    hairBack.position.set(-1,-4,0);
+    hairBack.position.set(-1, -4, 0);
     hairs.add(hairBack)
+
+    /**
+     * Glasses
+     */
+    const glassGeom = new THREE.BoxGeometry(5, 5, 5);
+    const glassMat = new THREE.MeshLambertMaterial({
+      color: colors.brown
+    });
+    const glassR = new THREE.Mesh(glassGeom, glassMat);
+    glassR.position.set(6, 0, 3)
+    const glassL = glassR.clone();
+    glassL.position.z = -glassR.position.z;
+    this.mesh.add(glassR)
+    this.mesh.add(glassL)
+
+    const glassAGeom = new THREE.BoxGeometry(11, 1, 11);
+    const glassA = new THREE.Mesh(glassAGeom, glassMat);
+    this.mesh.add(glassA);
+
+    /**
+     * Ears
+     */
+    const earGeom = new THREE.BoxGeometry(2,3,2);
+    const earL = new THREE.Mesh(earGeom, faceMat);
+    earL.position.set(0,0,-6);
+
+    const earR = earL.clone();
+    earR.position.z = -earL.position.z;
+    this.mesh.add(earL);
+    this.mesh.add(earR);
   }
+}
+
+Pilot.prototype.updateHairs = function () {
+  const hairs = this.hairsTop.children;
+  const l = hairs.length;
+
+  for (let i = 0; i < l; i++) {
+    const h = hairs[i];
+    h.scale.y = .75 + Math.cos(this.angleHairs + i / 3) * .25;
+  }
+  this.angleHairs += .16;
 }
 
 /**
@@ -504,9 +546,11 @@ const tick = () => {
   sky.mesh.rotation.z += .005;
 
   // mesh airplane
-  airplane.mesh.rotation.y += .01;
-  airplane.mesh.rotation.z += .01;
+  // airplane.mesh.rotation.y += .01;
+
+  // airplane.mesh.rotation.z += .01;
   airplane.propeller.rotation.x += .3;
+  airplane.pilot.updateHairs();
 
   // mesh sea
   sea.mesh.rotation.z += .005;
