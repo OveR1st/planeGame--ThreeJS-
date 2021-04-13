@@ -4,6 +4,7 @@
     "dev": "webpack serve --config ./bundler/webpack.dev.js",
     "deploy": "npm run build && gh-pages -d dist"
   },
+  "homepage": "https://over1st.github.io/planeGame--ThreeJS-",
   "dependencies": {
     "@babel/core": "^7.12.10",
     "@babel/preset-env": "^7.12.11",
