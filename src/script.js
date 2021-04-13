@@ -1,12 +1,21 @@
 import './style.scss'
 import * as THREE from 'three'
 import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls.js'
-
+import Stats from "three/examples/jsm/libs/stats.module";
 /**
  * Base
  */
 // Canvas
 // const canvas = document.getElementById('world');
+
+const stats = new Stats();
+let elStats = stats.domElement.children;
+for ( let el of elStats ) {
+  el.style.width = '130px'
+  el.style.height = '70px'
+}
+  stats.showPanel( 0 ); // 0: fps, 1: ms, 2: mb, 3+: custom
+document.body.appendChild( stats.dom );
 
 /**
  * Sizes
@@ -30,6 +39,45 @@ window.addEventListener('resize', () => {
   renderer.setSize(sizes.width, sizes.height)
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 })
+
+/**
+ * Mouse Move event
+ */
+
+let mousePos = {x: 0, y: 0};
+
+function updatePlane() {
+ const targetY = normalize(mousePos.y, -1, 1, 25, 175)
+  airplane.mesh.position.y += (targetY - airplane.mesh.position.y) * .1;
+
+  airplane.mesh.rotation.z = (targetY - airplane.mesh.position.y) * .0128;
+}
+
+function updateCameraFov() {
+  camera.fov = normalize(mousePos.x, -1, 1, 40, 80);
+  camera.updateProjectionMatrix() // обновить камеру
+}
+
+function normalize(v, vmin, vmax, tmin, tmax) {
+  const nv = Math.max(Math.min(v, vmax), vmin);
+  const dv = vmax - vmin;
+  const pc = (nv - vmin) / dv;
+  const dt = tmax - tmin;
+  const tv = tmin + (pc * dt);
+  return tv
+}
+
+function handleMouseMove(e) {
+  const tx = -1 + (e.clientX / sizes.width) * 2; // чтобы получить по Х от -1 до 1
+  const th = 1 - (e.clientY / sizes.height) * 2;
+
+  mousePos.x = tx
+  mousePos.y = th
+
+}
+
+document.addEventListener('mousemove', handleMouseMove)
+
 
 /**
  * Scene
@@ -65,6 +113,8 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 const container = document.getElementById('world');
 container.appendChild(renderer.domElement);
 
+
+
 /**
  * Perspective Camera
  */
@@ -81,8 +131,11 @@ const camera = new THREE.PerspectiveCamera(
 );
 camera.position.set(0, 100, 200);
 
-// Controls
-// const controls = new OrbitControls(camera, canvas)
+// /**
+//  *
+//  * @type {OrbitControls}
+//  */
+// const controls = new OrbitControls(camera, renderer.domElement)
 // controls.enableDamping = true
 
 
@@ -566,9 +619,6 @@ class AirPlane {
 
 }
 
-//TODO 1. Придумать сетку
-//TODO 2. Повторить svg фильтры
-//TODO 3. Повторить все уроки и курсы
 const airplane = new AirPlane();
 airplane.mesh.scale.set(.25, .25, .25);
 airplane.mesh.position.y = 100;
@@ -577,6 +627,8 @@ scene.add(airplane.mesh)
  * Tick
  */
 const tick = () => {
+  stats.begin();
+
   // mesh sky
   sky.mesh.rotation.z += .005;
 
@@ -587,12 +639,16 @@ const tick = () => {
   airplane.propeller.rotation.x += .3;
   airplane.pilot.updateHairs();
 
+  updatePlane();
+  updateCameraFov();
+
   // mesh sea
   // sea.mesh.rotation.z += .005;
     sea.moveWaves();
   // renderer
 
   renderer.render(scene, camera);
+  stats.end();
   requestAnimationFrame(tick)
 }
 
